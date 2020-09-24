@@ -6,11 +6,20 @@
         <meta http-equiv="X-UA-Compatible" content="ie=edge">
         <title>小猫不要吃怪兽</title>
         <script>
-            var can,ctx,array,mao,num=0,over=true
+            var can,ctx,array,mao,num=0,over=true,wudi=0,biubiuArray
+            //游戏设置
             var option = {
-                xiaoyuNum: 10,
-                guaiwuNum: 1,
-                speed: 3
+                xiaoyuNum: 10, // 小鱼存在数量
+                guaiwuNum: 1, // 初始怪物数
+                speed: 3,  // 怪物最快速度
+                biubiuTime: 2000, //子弹间隔时间
+                life: 3,  // 初始生命
+                wudiNum: 1, // 无敌护盾时间
+                typeWeight: [ // 怪物概率
+                 9, // 怪物
+                 0.5, // 生命
+                 0.5  // 保护
+                ]
             }
             window.onmousemove = function(e) {
                 maomi.x = e.clientX<25?25:e.clientX;
@@ -42,23 +51,40 @@
                 xx: 1,
                 yy: 1,
                 image: {},
-                new: function (notxiaoyu=false) {
+                new: function (type=0) {
                     this.x=Math.random()*innerWidth
                     this.y=innerHeight
                     this.xx=Math.random()*option.speed*2-option.speed
                     this.yy=Math.random()*option.speed*2-option.speed
                     this.image = new Image()
-                    if(notxiaoyu)
-                    this.image.src="./images/小怪兽.png"
-                    else
+                    if(type ===1){
+                        var sum =0
+                        for(let i of option.typeWeight)
+                        sum+=i
+                        let typeThis = Math.random()*sum
+                        if(typeThis<option.typeWeight[0])
+                        type=1
+                        else if(typeThis<option.typeWeight[1]+option.typeWeight[0])
+                        type=2
+                        else if(typeThis<option.typeWeight[2]+option.typeWeight[1]+option.typeWeight[0])
+                        type=3
+
+                    }
+                    if(type===0)
                     this.image.src="./images/鱼.png"
+                    else if(type===1)
+                    this.image.src="./images/小怪兽.png"
+                    else if(type===2)
+                    this.image.src="./images/生命.png"
+                    else if(type===3)
+                    this.image.src="./images/保护.png"
                     return {
                         x: this.x,
                         y: this.y,
                         xx: this.xx,
                         yy: this.yy,
                         image: this.image,
-                        notxiaoyu
+                        type
                         }
                 },
                 draw: function (that){
@@ -77,13 +103,49 @@
                     ctx.restore()
                 }
             }
+            const maogutou = {
+                x: 0,
+                y: 0,
+                xx: 0,
+                yy: 1,
+                image: {},
+                new: function (x,y) {
+                    this.image = new Image()
+                    this.image.src="./images/鱼骨头.png"
+                    return {
+                        x: x,
+                        y: y,
+                        xx: this.xx,
+                        yy: this.yy,
+                        image: this.image,
+                        }
+                },
+                draw: function (that,index){
+                    that.x+=that.xx
+                    that.y+=that.yy
+                    if(that.y>innerHeight){
+                        biubiuArray.splice(index,1)
+                        return 
+                    }
+                    ctx.save()
+                    ctx.drawImage(that.image,that.x-12.5,that.y+12.5,30,30)
+                    ctx.restore()
+                }
+            }
             function draw(){
                 judge()
                 if(over) return
                 document.getElementById('num').innerText=num
+                document.getElementById('life').innerText=option.life
+                if(wudi>0)
+                    document.getElementById('wudi').innerText='无敌时间还剩：' + wudi+ '秒' 
+                else
+                    document.getElementById('wudi').innerText='' 
                 maomi.draw()
                 for(let i of array)
                 xiaoyuorguaiwu.draw(i)
+                for(let i in biubiuArray)
+                maogutou.draw(biubiuArray[i],i)
                 requestAnimationFrame(draw)
             }
             function resize() {
@@ -94,23 +156,62 @@
             function judge(){
                 for(let i in array){
                     if(juli(maomi,array[i])){
-                        if(!array[i].notxiaoyu){
+                        if(array[i].type==0){
+                            // 迟到小鱼
                             num++
                             array.splice(i,1)
                             array.push(xiaoyuorguaiwu.new())
-                            array.push(xiaoyuorguaiwu.new(true))
-                        }else{
-                            over=true
-                            document.getElementById('shadow').style.display='block'
-                            document.getElementById('shadow').innerText="你的得分为："+num+"点击再次开始"
-                            return 
+                            array.push(xiaoyuorguaiwu.new(1))
+                        }else if(array[i].type===1){
+                            // 吃到怪兽
+                            if(wudi===0)
+                            option.life--
+                            if(option.life===0){
+                                over=true
+                                document.getElementById('shadow').style.display='block'
+                                document.getElementById('tip').innerText="你的得分为："+num+"\n点击再次开始"
+                                return
+                            } else{
+                                array.splice(i,1)
+                                array.push(xiaoyuorguaiwu.new(1))
+                            }
+                        } else {
+                            // 吃到道具
+                            if(array[i].type==2)
+                            option.life++
+                            else if(array[i].type==3)
+                            wudil()
+                            array.splice(i,1)
+                            array.push(xiaoyuorguaiwu.new())
+                            array.push(xiaoyuorguaiwu.new(1))
                         }
                     }
+                    if(array[i].type===1){
+                        for(let j in biubiuArray){
+                            if(juli(biubiuArray[j],array[i])){
+                                // 子弹碰到怪兽
+                                array.splice(i,1)
+                                biubiuArray.splice(j,1)
+                                array.push(xiaoyuorguaiwu.new(1))
+                            }
+                        }   
+                    }  
                 }
                 function juli(a,b){
                     let aaa = Math.abs(a.x-b.x-25)<25 && Math.abs(a.y-b.y-25)<25
                     return aaa
                 }
+            }
+            function biubiu(){
+                setInterval(() => {
+                    biubiuArray.push(maogutou.new(maomi.x,maomi.y))
+                }, option.biubiuTime);
+            }
+            function wudil(){
+                wudi+=option.wudiNum
+                setTimeout(()=>{
+                    wudi--
+                },1000)
             }
             window.onload = function myfunction() {
                 can = document.getElementById('cw');
@@ -118,26 +219,31 @@
                 array=[]
                 mao = new Image()
                 mao.src="./images/猫.png"
+                resize()
+            }
+            function start  () {
+                over=false
+                array=[]
+                biubiuArray=[]
+                wudi=0
                 for(let i=0 ; i<option.xiaoyuNum; i++){
                     array.push(xiaoyuorguaiwu.new())
                 }
                 for(let i=0 ; i<option.guaiwuNum; i++){
-                    array.push(xiaoyuorguaiwu.new(true))
+                    array.push(xiaoyuorguaiwu.new(1))
                 }
-                resize()
-                draw()
-            }
-            function start() {
-                over=false
                 document.getElementById('shadow').style.display='none'
                 draw()
+                biubiu()
             }
         </script>
         <style>
             #cw {
                 position: fixed;
                 z-index: -1;
-                background-color: #baab99;
+                top: 0;
+                background-color: rgb(40, 150, 200);
+                color: #FFFFFF;
             }
             #shadow{
                 position: fixed;
@@ -145,7 +251,7 @@
                 width: 100%;
                 height: 100%;
                 text-align: center;
-                padding: 30% 0;
+                padding: 40% 0;
                 background-color: aliceblue;
             }
             body {
@@ -159,7 +265,14 @@
     </head>
     <body>
         <canvas id="cw"></canvas>
-        你的得分：<a id="num"></a>
-        <div id="shadow" onclick="start()">点击开始</div>
+        <p>你的得分：<a id="num"></a></p>
+        <p>你的生命：<a id="life"></a></p>
+        <p id="wudi"></p>
+        <div id="shadow" onclick="start()">
+            <!-- <div class="konzhi ">
+                <input type="num" />
+            </div> -->
+            <div id="tip">点击开始</div>
+        </div>
     </body>
 </html>
