@@ -217,7 +217,7 @@
                 zuigaofen=num
                 localStorage.setItem('zuigaofen',zuigaofen)
                 document.getElementById('shadow').style.display='block'
-                document.getElementById('tip').innerText="你最高得分为："+zuigaofen+"\n你的得分为："+num+"\n\n\n点击再次开始"
+                document.getElementById('tip').innerText="你最高得分为："+zuigaofen+"\n当前得分为："+num+"\n\n\n点击再次开始"
             }
             window.onload = function myfunction() {
                 can = document.getElementById('cw');
@@ -251,7 +251,7 @@
                 position: fixed;
                 z-index: -1;
                 top: 0;
-                background-color: rgb(40, 150, 200);
+                background-color: rgb(171, 206, 223);
                 color: #FFFFFF;
             }
             #shadow{
