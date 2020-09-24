@@ -6,7 +6,7 @@
         <meta http-equiv="X-UA-Compatible" content="ie=edge">
         <title>小猫不要吃怪兽</title>
         <script>
-            var can,ctx,array,mao,num=0,over=true,wudi=0,biubiuArray
+            var can,ctx,array,mao,num=0,over=true,wudi=0,biubiuArray,myName,zuigaofen
             //游戏设置
             var option = {
                 xiaoyuNum: 10, // 小鱼存在数量
@@ -166,10 +166,8 @@
                             // 吃到怪兽
                             if(wudi===0)
                             option.life--
-                            if(option.life===0){
-                                over=true
-                                document.getElementById('shadow').style.display='block'
-                                document.getElementById('tip').innerText="你的得分为："+num+"\n点击再次开始"
+                            if(option.life<=0){
+                                end()
                                 return
                             } else{
                                 array.splice(i,1)
@@ -213,9 +211,18 @@
                     wudi--
                 },1000)
             }
+            function end(){
+                over=true
+                if(zuigaofen<num)
+                zuigaofen=num
+                localStorage.setItem('zuigaofen',zuigaofen)
+                document.getElementById('shadow').style.display='block'
+                document.getElementById('tip').innerText="你最高得分为："+zuigaofen+"\n你的得分为："+num+"\n\n\n点击再次开始"
+            }
             window.onload = function myfunction() {
                 can = document.getElementById('cw');
                 ctx = can.getContext('2d');
+                zuigaofen=localStorage.getItem('zuigaofen')?localStorage.getItem('zuigaofen'):0
                 array=[]
                 mao = new Image()
                 mao.src="./images/猫.png"
@@ -226,6 +233,8 @@
                 array=[]
                 biubiuArray=[]
                 wudi=0
+                option.life=3
+                num=0
                 for(let i=0 ; i<option.xiaoyuNum; i++){
                     array.push(xiaoyuorguaiwu.new())
                 }
@@ -252,7 +261,8 @@
                 height: 100%;
                 text-align: center;
                 padding: 40% 0;
-                background-color: aliceblue;
+                background-color: black;
+                color: #FFFFFF;
             }
             body {
                 margin: 0;
@@ -268,11 +278,12 @@
         <p>你的得分：<a id="num"></a></p>
         <p>你的生命：<a id="life"></a></p>
         <p id="wudi"></p>
-        <div id="shadow" onclick="start()">
+        <div id="shadow">
             <!-- <div class="konzhi ">
-                <input type="num" />
+                你的姓名：<input id="name" type="text" />
             </div> -->
-            <div id="tip">点击开始</div>
+            <div id="tip" onclick="start()">点击开始</div>
+            <div></div>
         </div>
     </body>
 </html>
