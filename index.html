@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <title>小猫不要吃怪兽</title>
+        <script>
+            var can,ctx,array,mao,num=0,over=true
+            var option = {
+                xiaoyuNum: 10,
+                guaiwuNum: 1,
+                speed: 3
+            }
+            window.onmousemove = function(e) {
+                maomi.x = e.clientX<25?25:e.clientX;
+                maomi.y = e.clientY<25?25:e.clientY;
+
+            }
+            window.ontouchmove = function(e) {
+                e=e.changedTouches[0]
+                maomi.x = e.clientX<25?25:e.clientX;
+                maomi.y = e.clientY<25?25:e.clientY;
+
+            }
+            window.onresize = function() {
+                resize();
+            }
+            const maomi = {
+                x: innerWidth / 2,
+                y: innerHeight / 2,
+                draw: function (){
+                        ctx.save()
+                        ctx.clearRect(0,0,innerWidth,innerHeight);  
+                        ctx.drawImage(mao,this.x-25,this.y-25,50,50)
+                        ctx.restore()
+                }
+            };
+            const xiaoyuorguaiwu = {
+                x: 0,
+                y: 0,
+                xx: 1,
+                yy: 1,
+                image: {},
+                new: function (notxiaoyu=false) {
+                    this.x=Math.random()*innerWidth
+                    this.y=innerHeight
+                    this.xx=Math.random()*option.speed*2-option.speed
+                    this.yy=Math.random()*option.speed*2-option.speed
+                    this.image = new Image()
+                    if(notxiaoyu)
+                    this.image.src="./images/小怪兽.png"
+                    else
+                    this.image.src="./images/鱼.png"
+                    return {
+                        x: this.x,
+                        y: this.y,
+                        xx: this.xx,
+                        yy: this.yy,
+                        image: this.image,
+                        notxiaoyu
+                        }
+                },
+                draw: function (that){
+                    that.x+=that.xx
+                    that.y+=that.yy
+                    if(that.x<=0 || that.x>innerWidth){
+                        that.xx=-that.xx
+                        that.x+=2*that.xx
+                    }
+                    if(that.y<=0 || that.y>innerHeight){
+                        that.yy=-that.yy
+                        that.y+=2*that.yy
+                    }
+                    ctx.save()
+                    ctx.drawImage(that.image,that.x,that.y,50,50)
+                    ctx.restore()
+                }
+            }
+            function draw(){
+                judge()
+                if(over) return
+                document.getElementById('num').innerText=num
+                maomi.draw()
+                for(let i of array)
+                xiaoyuorguaiwu.draw(i)
+                requestAnimationFrame(draw)
+            }
+            function resize() {
+                can.height = innerHeight;
+                can.width = innerWidth;
+            }
+            // 碰撞检测
+            function judge(){
+                for(let i in array){
+                    if(juli(maomi,array[i])){
+                        if(!array[i].notxiaoyu){
+                            num++
+                            array.splice(i,1)
+                            array.push(xiaoyuorguaiwu.new())
+                            array.push(xiaoyuorguaiwu.new(true))
+                        }else{
+                            over=true
+                            document.getElementById('shadow').style.display='block'
+                            document.getElementById('shadow').innerText="你的得分为："+num+"点击再次开始"
+                            return 
+                        }
+                    }
+                }
+                function juli(a,b){
+                    let aaa = Math.abs(a.x-b.x-25)<25 && Math.abs(a.y-b.y-25)<25
+                    return aaa
+                }
+            }
+            window.onload = function myfunction() {
+                can = document.getElementById('cw');
+                ctx = can.getContext('2d');
+                array=[]
+                mao = new Image()
+                mao.src="./images/猫.png"
+                for(let i=0 ; i<option.xiaoyuNum; i++){
+                    array.push(xiaoyuorguaiwu.new())
+                }
+                for(let i=0 ; i<option.guaiwuNum; i++){
+                    array.push(xiaoyuorguaiwu.new(true))
+                }
+                resize()
+                draw()
+            }
+            function start() {
+                over=false
+                document.getElementById('shadow').style.display='none'
+                draw()
+            }
+        </script>
+        <style>
+            #cw {
+                position: fixed;
+                z-index: -1;
+                background-color: #baab99;
+            }
+            #shadow{
+                position: fixed;
+                top: 0;
+                width: 100%;
+                height: 100%;
+                text-align: center;
+                padding: 30% 0;
+                background-color: aliceblue;
+            }
+            body {
+                margin: 0;
+                padding: 0;
+            }
+            * {
+                box-sizing: border-box;
+            }
+        </style>
+    </head>
+    <body>
+        <canvas id="cw"></canvas>
+        你的得分：<a id="num"></a>
+        <div id="shadow" onclick="start()">点击开始</div>
+    </body>
+</html>
